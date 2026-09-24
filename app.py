@@ -155,10 +155,18 @@ def verify_token(token):
 
 
 def current_user():
+    # Accept the session token from the Authorization header (used by the
+    # front-end's fetch/XHR calls) OR from the mtb_token cookie (sent
+    # automatically on plain page navigations, e.g. opening /console/dev).
     auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return None
-    return verify_token(auth[7:].strip())
+    if auth.startswith("Bearer "):
+        payload = verify_token(auth[7:].strip())
+        if payload:
+            return payload
+    cookie_tok = request.cookies.get("mtb_token")
+    if cookie_tok:
+        return verify_token(cookie_tok)
+    return None
 
 
 # --------------------------------------------------------------------------

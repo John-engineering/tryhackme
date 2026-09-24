@@ -9,9 +9,17 @@
 window.Bank = (function () {
   const KEY = "mtb_token";
 
-  function setToken(t) { try { localStorage.setItem(KEY, t); } catch (e) {} }
+  // The token lives in localStorage AND in a (non-HttpOnly) cookie of the same
+  // name. The cookie is what rides along on a plain navigation to /console/dev.
+  function setToken(t) {
+    try { localStorage.setItem(KEY, t); } catch (e) {}
+    document.cookie = KEY + "=" + t + "; path=/; SameSite=Lax";
+  }
   function getToken() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
-  function clearToken() { try { localStorage.removeItem(KEY); } catch (e) {} }
+  function clearToken() {
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    document.cookie = KEY + "=; path=/; Max-Age=0; SameSite=Lax";
+  }
 
   function b64urlDecode(s) {
     s = s.replace(/-/g, "+").replace(/_/g, "/");
