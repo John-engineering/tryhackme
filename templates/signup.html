@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Open an account — Meridian Trust</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="mark">M</span> Meridian Trust</div>
+    <nav class="topnav"><a href="/">Home</a><a href="/login">Sign in</a></nav>
+  </header>
+
+  <div class="authwrap">
+    <div class="card">
+      <h2>Open an account</h2>
+      <p class="sub">Free checking in under a minute. New accounts start with a $1,000 welcome balance.</p>
+      <form id="signupForm">
+        <label for="username">Username</label>
+        <input type="text" id="username" autocomplete="username" required>
+        <label for="email">Email</label>
+        <input type="email" id="email" autocomplete="email">
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="new-password" required>
+        <button class="btn primary" type="submit">Create account</button>
+      </form>
+      <div class="msg" id="msg"></div>
+      <p class="altline">Already a member? <a href="/login">Sign in</a></p>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    document.getElementById('signupForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const msg = document.getElementById('msg');
+      const r = await Bank.api('/api/signup', 'POST', {
+        username: document.getElementById('username').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value
+      });
+      if (r.ok) {
+        msg.className = 'msg ok'; msg.textContent = 'Account created. You can sign in now.';
+        setTimeout(() => location.href = '/login', 800);
+      } else {
+        msg.className = 'msg err'; msg.textContent = (r.body && r.body.error) || 'Could not create account';
+      }
+    });
+  </script>
+</body>
+</html>

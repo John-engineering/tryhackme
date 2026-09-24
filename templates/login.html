@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in — Meridian Trust</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="mark">M</span> Meridian Trust</div>
+    <nav class="topnav"><a href="/">Home</a><a href="/signup">Open account</a></nav>
+  </header>
+
+  <div class="authwrap">
+    <div class="card">
+      <h2>Welcome back</h2>
+      <p class="sub">Sign in to your Meridian Trust account.</p>
+      <form id="loginForm">
+        <label for="username">Username</label>
+        <input type="text" id="username" autocomplete="username" required>
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="current-password" required>
+        <button class="btn primary" type="submit">Sign in</button>
+      </form>
+      <div class="msg" id="msg"></div>
+      <p class="altline">New here? <a href="/signup">Open an account</a></p>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const msg = document.getElementById('msg');
+      msg.className = 'msg';
+      const r = await Bank.api('/api/login', 'POST', {
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value
+      });
+      if (r.ok && r.body.token) {
+        Bank.setToken(r.body.token);
+        msg.className = 'msg ok'; msg.textContent = 'Signed in. Redirecting…';
+        setTimeout(() => location.href = '/dashboard', 500);
+      } else {
+        msg.className = 'msg err'; msg.textContent = (r.body && r.body.error) || 'Sign in failed';
+      }
+    });
+  </script>
+</body>
+</html>

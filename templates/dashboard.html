@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your accounts — Meridian Trust</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="mark">M</span> Meridian Trust</div>
+    <nav class="topnav">
+      <a href="/dashboard">Accounts</a>
+      <a href="#" id="signout">Sign out</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div id="hello"></div>
+    <div class="dashgrid">
+      <div class="card">
+        <div class="acctno">Checking · account <span id="acctId">–</span></div>
+        <div class="balance">$<span id="balance">–</span></div>
+        <h3 style="color:var(--navy2)">Recent activity</h3>
+        <table class="txns">
+          <thead><tr><th>Memo</th><th>Date</th><th style="text-align:right">Amount</th></tr></thead>
+          <tbody id="txnBody"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--navy2)">Quick transfer</h3>
+        <p class="sub">Send money to another Meridian account by number.</p>
+        <form id="xfer">
+          <input type="hidden" id="fromAcct">
+          <label for="toAcct">To account #</label>
+          <input type="number" id="toAcct" min="1" required>
+          <label for="amt">Amount ($)</label>
+          <input type="number" id="amt" min="1" required>
+          <button class="btn primary" type="submit">Send</button>
+        </form>
+        <div class="msg" id="msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    (async function () {
+      const me = Bank.whoami();
+      if (!me) { location.href = '/login'; return; }
+      document.getElementById('hello').innerHTML =
+        '<p class="pill">Signed in as ' + me.user + ' (role: ' + me.role + ')</p>';
+      document.getElementById('fromAcct').value = me.uid;
+
+      // Load the current account. NOTE: the account id comes straight from the
+      // token and is echoed into this request URL.
+      const r = await Bank.api('/api/account/' + me.uid, 'GET');
+      if (r.ok) {
+        document.getElementById('acctId').textContent = r.body.account.id;
+        document.getElementById('balance').textContent = r.body.account.balance.toLocaleString();
+        const tb = document.getElementById('txnBody');
+        (r.body.transactions || []).forEach(function (t) {
+          const tr = document.createElement('tr');
+          const cls = t.amount < 0 ? 'neg' : 'pos';
+          const when = new Date(t.ts * 1000).toLocaleDateString();
+          tr.innerHTML = '<td>' + t.memo + '</td><td>' + when +
+            '</td><td class="amt ' + cls + '" style="text-align:right">' +
+            (t.amount < 0 ? '-$' + Math.abs(t.amount).toLocaleString() : '$' + t.amount.toLocaleString()) +
+            '</td>';
+          tb.appendChild(tr);
+        });
+      }
+    })();
+
+    document.getElementById('xfer').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const msg = document.getElementById('msg');
+      const r = await Bank.api('/api/transfer', 'POST', {
+        from: Number(document.getElementById('fromAcct').value),
+        to: Number(document.getElementById('toAcct').value),
+        amount: Number(document.getElementById('amt').value)
+      });
+      if (r.ok) { msg.className = 'msg ok'; msg.textContent = 'Transfer complete.'; setTimeout(() => location.reload(), 700); }
+      else { msg.className = 'msg err'; msg.textContent = (r.body && r.body.error) || 'Transfer failed'; }
+    });
+
+    document.getElementById('signout').addEventListener('click', function (e) {
+      e.preventDefault(); Bank.clearToken(); location.href = '/';
+    });
+  </script>
+</body>
+</html>

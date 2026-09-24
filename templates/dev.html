@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Developer Console — Meridian Trust (INTERNAL)</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="mark">M</span> Meridian Trust · INTERNAL</div>
+    <nav class="topnav"><a href="/dashboard">Back to app</a></nav>
+  </header>
+
+  <div class="devwrap">
+    <h1>Developer Console</h1>
+    <p class="sub">Authenticated as <strong>{{ who }}</strong> (role: admin). Restricted tooling — do not share.</p>
+
+    <div class="flag" id="flagBox">Loading flag…</div>
+
+    <h3 style="margin-top:28px;color:var(--navy2)">User table dump</h3>
+    <p class="sub">Raw records including stored password digests (sha256, unsalted).</p>
+    <pre class="dump" id="dump">Loading…</pre>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    (async function () {
+      const f = await Bank.api('/api/_internal/flag', 'GET');
+      document.getElementById('flagBox').textContent = f.ok ? f.body.flag : 'forbidden';
+      const u = await Bank.api('/api/_internal/users', 'GET');
+      document.getElementById('dump').textContent =
+        u.ok ? JSON.stringify(u.body.users, null, 2) : 'forbidden';
+    })();
+  </script>
+</body>
+</html>
